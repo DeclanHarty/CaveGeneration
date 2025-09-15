@@ -25,12 +25,8 @@ public class VisualsManager : MonoBehaviour
     void OnDrawGizmos()
     {
         IPoint[] points = delaunator.Points;
-        for (int i = 0; i < points.Length; i++)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawSphere(new Vector3((float)points[i].X, (float)points[i].Y), .1f);
-        }
 
+        // Renders all edges of the Delauney Triangulation
         IEdge[] edges = delaunator.GetEdges().ToArray();
         foreach (IEdge edge in edges)
         {
@@ -38,26 +34,22 @@ public class VisualsManager : MonoBehaviour
             Gizmos.DrawLine(edge.P.ToVector3(), edge.Q.ToVector3());
         }
 
-        HashSet<Vector2Int> renderedEdges = new HashSet<Vector2Int>();
-        for (int startPointIndex = 0; startPointIndex < MST.Count; startPointIndex++)
-            {
-                foreach (int endPointIndex in MST[startPointIndex])
-                {
+        // Renders edges in the MST
+        HashSet<Vector2Int> mstEdges = PrimsAlgo.ConvertAdjacencyListToSet(MST);
+        foreach (Vector2Int edge in mstEdges)
+        {
+            Gizmos.color = Color.white;
+            Vector3 startPoint = new Vector3((float)points[edge.x].X, (float)points[edge.x].Y);
+            Vector3 endPoint = new Vector3((float)points[edge.y].X, (float)points[edge.y].Y);
+            Gizmos.DrawLine(startPoint, endPoint);
+        }
 
-                    if (!renderedEdges.Contains(new Vector2Int(startPointIndex, endPointIndex)))
-                    {
-                        Gizmos.color = Color.white;
-                        Vector3 startPoint = new Vector3((float)points[startPointIndex].X, (float)points[startPointIndex].Y);
-                        Vector3 endPoint = new Vector3((float)points[endPointIndex].X, (float)points[endPointIndex].Y);
-                        Gizmos.DrawLine(startPoint, endPoint);
-
-                        renderedEdges.Add(new Vector2Int(startPointIndex, endPointIndex));
-                        renderedEdges.Add(new Vector2Int(endPointIndex, startPointIndex));
-                    }
-
-                }
-
-            }
+        // Renders the Points on the graph
+        for (int i = 0; i < points.Length; i++)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(new Vector3((float)points[i].X, (float)points[i].Y), .1f);
+        }
         
     }
 }

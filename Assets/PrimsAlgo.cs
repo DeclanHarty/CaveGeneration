@@ -193,4 +193,30 @@ public class PrimsAlgo
 
         return treeAdjacencyList;
     }
+
+    public static HashSet<Vector2Int> ConvertAdjacencyListToSet(List<List<int>> adjacencyList) {
+        HashSet<Vector2Int> edges = new HashSet<Vector2Int>();
+
+        // Search through each starting vertex
+        for (int startIndex = 0; startIndex < adjacencyList.Count; startIndex++)
+        {
+            // Search through each neighbor
+            foreach (int endIndex in adjacencyList[startIndex])
+            {
+                Vector2Int edge = new Vector2Int(startIndex, endIndex);
+                Vector2Int edgeMirror = new Vector2Int(endIndex, startIndex);
+
+                if (edges.Contains(edge) || edges.Contains(edgeMirror))
+                {
+                    continue;
+                }
+                else
+                {
+                    edges.Add(edge);
+                }
+            }
+        }
+
+        return edges;
+    }
 }

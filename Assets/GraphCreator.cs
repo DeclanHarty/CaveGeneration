@@ -7,23 +7,24 @@ using UnityEngine;
 
 public class GraphCreator
 {
-    public static IPoint[] CreatePoints(Vector2 topLeftCorner, Vector2 bottomRightCorner, int gridScale)
+    public static IPoint[] CreatePoints(Vector2 topLeftCorner, Vector2 bottomRightCorner, int gridSize)
     {
-        float cellScale = Mathf.Abs(topLeftCorner.x - bottomRightCorner.x) / gridScale;
-        IPoint[] points = new IPoint[gridScale * gridScale];
-        for (int y = 0; y < gridScale; y++)
+        // Determines the size of each cell in the grid based on the gridSize
+        float cellScale = Mathf.Abs(topLeftCorner.x - bottomRightCorner.x) / gridSize;
+        IPoint[] points = new IPoint[gridSize * gridSize];
+        for (int y = 0; y < gridSize; y++)
         {
-            for (int x = 0; x < gridScale; x++)
+            for (int x = 0; x < gridSize; x++)
             {
-                Vector2 randOffset = new Vector2(UnityEngine.Random.Range(0f, cellScale), UnityEngine.Random.Range(0f, cellScale));
+                Vector2 randOffset = new Vector2(UnityEngine.Random.Range(-cellScale/3, cellScale/3), UnityEngine.Random.Range(-cellScale/3, cellScale/3));
 
-                Vector2 pointPos = new Vector2(x * cellScale + randOffset.x + topLeftCorner.x, y * cellScale + randOffset.y + bottomRightCorner.y);
-                points[y * gridScale + x] = new Point(pointPos.x, pointPos.y);
+                Vector2 pointPos = new Vector2(x * cellScale + + cellScale/2 + randOffset.x + topLeftCorner.x, y * cellScale + cellScale/2 + randOffset.y + bottomRightCorner.y);
+                points[y * gridSize + x] = new Point(pointPos.x, pointPos.y);
             }
         }
 
         return points;
-    }
+    } 
 
     public static Delaunator CreateDelauneyTriangulation(IPoint[] points)
     {
