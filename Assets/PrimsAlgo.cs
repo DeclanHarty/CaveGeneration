@@ -5,6 +5,7 @@ using System.Runtime.ExceptionServices;
 using DelaunatorSharp;
 using DelaunatorSharp.Unity.Extensions;
 using Unity.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PrimsAlgo
@@ -47,8 +48,14 @@ public class PrimsAlgo
     public static List<Dictionary<int, double>> CreateWeightedAdjacencyList(IPoint[] points, IEdge[] edges)
     {
         // Weighted Adjacency List where the first List index indicates represents the index of the startPoint.
-        // The int key represents the index of the endPOint and the double represents the distance
-        List<Dictionary<int, double>> adjacencyList = new List<Dictionary<int, double>>(points.Length);
+        // The int key represents the index of the endPoint and the double represents the distance.
+        List<Dictionary<int, double>> adjacencyList = new List<Dictionary<int, double>>();
+
+        for (int i = 0; i < points.Length; i++)
+        {
+            adjacencyList.Add(new Dictionary<int, double>());
+        }
+
 
         Dictionary<IPoint, int> pointIndexDictionary = new Dictionary<IPoint, int>();
 
@@ -67,7 +74,6 @@ public class PrimsAlgo
                     IPoint endPoint = edges[edgeIndex].Q;
 
                     double distance = Math.Sqrt(Math.Pow(startPoint.X - endPoint.X, 2) + Math.Pow(startPoint.Y - endPoint.Y, 2));
-
                     adjacencyList[pointIndex][pointIndexDictionary[endPoint]] = distance;
                     adjacencyList[pointIndexDictionary[endPoint]][pointIndex] = distance;
                 }
@@ -138,7 +144,11 @@ public class PrimsAlgo
     public static List<List<int>> PrimMST(List<Dictionary<int, double>> weightedAdjacencyList)
     {
         // Create an adjacency List to store the MST
-        List<List<int>> treeAdjacencyList = new List<List<int>>(weightedAdjacencyList.Count);
+        List<List<int>> treeAdjacencyList = new List<List<int>>();
+        for (int i = 0; i < weightedAdjacencyList.Count; i++)
+        {
+            treeAdjacencyList.Add(new List<int>());
+        }
         // Initialize Hashset for storing visited points indices
         HashSet<int> visitedPoints = new HashSet<int>();
         // Decide on a starting index and add that index to the visitedSet
@@ -176,8 +186,8 @@ public class PrimsAlgo
 
             // Otherwise add the new edge to the adjacency list and add the point
             // to the visited points set
-            treeAdjacencyList[shortestEdgeStartPoint].Append(shortestEdgeEndPoint);
-            treeAdjacencyList[shortestEdgeEndPoint].Append(shortestEdgeStartPoint);
+            treeAdjacencyList[shortestEdgeStartPoint].Add(shortestEdgeEndPoint);
+            treeAdjacencyList[shortestEdgeEndPoint].Add(shortestEdgeStartPoint);
             visitedPoints.Add(shortestEdgeEndPoint);
         }
 
