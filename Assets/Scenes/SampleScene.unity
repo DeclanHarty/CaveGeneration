@@ -239,6 +239,7 @@ MonoBehaviour:
   topLeftCorner: {x: -5, y: 5}
   bottomRightCorner: {x: 5, y: -5}
   gridScale: 4
+  numberOfLoops: 3
 --- !u!4 &1993088350
 Transform:
   m_ObjectHideFlags: 0

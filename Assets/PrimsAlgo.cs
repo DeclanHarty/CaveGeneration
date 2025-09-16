@@ -203,10 +203,17 @@ public class PrimsAlgo
             // Search through each neighbor
             foreach (int endIndex in adjacencyList[startIndex])
             {
-                Vector2Int edge = new Vector2Int(startIndex, endIndex);
-                Vector2Int edgeMirror = new Vector2Int(endIndex, startIndex);
+                Vector2Int edge;
+                if (startIndex <= endIndex)
+                {
+                    edge = new Vector2Int(startIndex, endIndex);
+                }
+                else
+                {
+                    edge = new Vector2Int(endIndex, startIndex);
+                }
 
-                if (edges.Contains(edge) || edges.Contains(edgeMirror))
+                if (edges.Contains(edge))
                 {
                     continue;
                 }
