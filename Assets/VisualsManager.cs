@@ -5,6 +5,7 @@ using DelaunatorSharp;
 using Unity.VisualScripting;
 using System.Linq;
 using DelaunatorSharp.Unity.Extensions;
+using UnityEditor.UI;
 
 public class VisualsManager : MonoBehaviour
 {
@@ -13,12 +14,17 @@ public class VisualsManager : MonoBehaviour
     public int gridScale;
     public int numberOfLoops;
 
+    public float maxEdgeDistanceToCellSizeRatio;
+
     public Delaunator delaunator;
     HashSet<Vector2Int> MST = new HashSet<Vector2Int>();
     HashSet<Vector2Int> loopEdges;
 
+
     public void Start()
     {
+        float cellSize = Mathf.Abs(topLeftCorner.x - bottomRightCorner.x) / gridScale;
+
         IPoint[] points = GraphCreator.CreatePoints(topLeftCorner, bottomRightCorner, gridScale);
         delaunator = GraphCreator.CreateDelauneyTriangulation(points);
 
@@ -29,13 +35,21 @@ public class VisualsManager : MonoBehaviour
         edges.ExceptWith(MST);
         loopEdges = new HashSet<Vector2Int>();
 
-        for (int i = 0; i < numberOfLoops; i++)
+        int i = 0;
+        while (i < numberOfLoops && edges.Count() > 0)
         {
             Vector2Int[] edgesToSelectFrom = edges.ToArray();
             int randomIndex = Random.Range(0, edgesToSelectFrom.Length);
             Vector2Int selectedEdge = edgesToSelectFrom[randomIndex];
+            float edgeLength = Vector3.Distance(points[selectedEdge.x].ToVector3(), points[selectedEdge.y].ToVector3());
+            if (edgeLength > maxEdgeDistanceToCellSizeRatio * cellSize)
+            {
+                edges.Remove(selectedEdge);
+                continue;
+            }
             loopEdges.Add(selectedEdge);
             edges.Remove(selectedEdge);
+            i++;
         }
 
     }
