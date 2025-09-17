@@ -19,19 +19,21 @@ public class VisualsManager : MonoBehaviour
     public float maxEdgeDistanceToCellSizeRatio;
 
     public Delaunator delaunator;
+    IPoint[] points;
     HashSet<Vector2Int> MST = new HashSet<Vector2Int>();
     HashSet<Vector2Int> loopEdges;
 
-    public IEdge[] roomEdges;
+    public List<IEdge[]> rooms;
     public float minRadius;
     public float maxRadius;
     public int numberOfVertices;
+    public float roomScale;
 
     public void Start()
     {
         float cellSize = Mathf.Abs(topLeftCorner.x - bottomRightCorner.x) / gridScale;
 
-        IPoint[] points = GraphCreator.CreatePoints(topLeftCorner, bottomRightCorner, gridScale);
+        points = GraphCreator.CreatePoints(topLeftCorner, bottomRightCorner, gridScale);
         delaunator = GraphCreator.CreateDelauneyTriangulation(points);
 
         List<List<int>> ListMST = GraphCreator.CreateMinimumSpanningTree(delaunator);
@@ -41,10 +43,11 @@ public class VisualsManager : MonoBehaviour
         edges.ExceptWith(MST);
         loopEdges = new HashSet<Vector2Int>();
 
-        roomEdges = SimpleRoomCreator.CreateSimpleCircularRoom(minRadius, maxRadius, numberOfVertices);
-        foreach(IEdge edge in roomEdges) {
-            Debug.Log(edge.P.ToVector2().ToString() + " : " + edge.Q.ToVector2().ToString());
-
+        rooms = new List<IEdge[]>();
+        for (int roomIndex = 0; roomIndex < gridScale * gridScale; roomIndex++)
+        {
+            IEdge[] room = SimpleRoomCreator.CreateSimpleCircularRoom(minRadius * roomScale, maxRadius * roomScale, numberOfVertices);
+            rooms.Add(room);
         }
 
         int i = 0;
@@ -70,7 +73,7 @@ public class VisualsManager : MonoBehaviour
     {
         if (renderRoom)
         {
-            RenderRoom();
+            RenderRooms();
         }
         if (renderGraph)
         {
@@ -79,13 +82,21 @@ public class VisualsManager : MonoBehaviour
     
     }
 
-    public void RenderRoom()
+    public void RenderRooms()
     {
-        foreach (IEdge edge in roomEdges)
+        if (rooms == null)
         {
-            Gizmos.color = Color.black;
-            Gizmos.DrawLine(edge.P.ToVector3(), edge.Q.ToVector3());
+            return;
         }
+        for(int roomIndex = 0; roomIndex < rooms.Count; roomIndex++)
+        {
+            foreach (IEdge edge in rooms[roomIndex])
+            {
+                Gizmos.color = Color.black;
+                Gizmos.DrawLine(edge.P.ToVector3() + points[roomIndex].ToVector3(), edge.Q.ToVector3() + points[roomIndex].ToVector3());
+            }
+        }
+
     }
 
     public void RenderGraph()

@@ -236,16 +236,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8ae68e850c2c394b97ced18c8fd4089, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  renderGraph: 0
+  renderGraph: 1
   renderRoom: 1
   topLeftCorner: {x: -5, y: 5}
   bottomRightCorner: {x: 5, y: -5}
   gridScale: 4
-  numberOfLoops: 5
+  numberOfLoops: 4
   maxEdgeDistanceToCellSizeRatio: 1.5
-  minRadius: 0
-  maxRadius: 0
-  numberOfVertices: 0
+  minRadius: 3
+  maxRadius: 6
+  numberOfVertices: 24
+  roomScale: 0.1
 --- !u!4 &1993088350
 Transform:
   m_ObjectHideFlags: 0
