@@ -11,29 +11,27 @@ public class VisualsManager : MonoBehaviour
 {
     public bool renderGraph;
     public bool renderRoom;
-    public Vector2 topLeftCorner;
-    public Vector2 bottomRightCorner;
-    public int gridScale;
-    public int numberOfLoops;
+    public GraphParams graphParams;
+    public RoomParams roomParams;
 
-    public float maxEdgeDistanceToCellSizeRatio;
-
-    public Delaunator delaunator;
-    IPoint[] points;
-    HashSet<Vector2Int> MST = new HashSet<Vector2Int>();
-    HashSet<Vector2Int> loopEdges;
+    private Delaunator delaunator;
+    private IPoint[] points;
+    private HashSet<Vector2Int> MST = new HashSet<Vector2Int>();
+    private HashSet<Vector2Int> loopEdges;
 
     public List<IEdge[]> rooms;
-    public float minRadius;
-    public float maxRadius;
-    public int numberOfVertices;
-    public float roomScale;
 
     public void Start()
     {
-        float cellSize = Mathf.Abs(topLeftCorner.x - bottomRightCorner.x) / gridScale;
+        GenerateGraph();
+        GenerateRooms();
+    }
 
-        points = GraphCreator.CreatePoints(topLeftCorner, bottomRightCorner, gridScale);
+    public void GenerateGraph()
+    {
+        float cellSize = Mathf.Abs(graphParams.topLeftCorner.x - graphParams.bottomRightCorner.x) / graphParams.gridScale;
+
+        points = GraphCreator.CreatePoints(graphParams.topLeftCorner, graphParams.bottomRightCorner, graphParams.gridScale);
         delaunator = GraphCreator.CreateDelauneyTriangulation(points);
 
         List<List<int>> ListMST = GraphCreator.CreateMinimumSpanningTree(delaunator);
@@ -43,21 +41,14 @@ public class VisualsManager : MonoBehaviour
         edges.ExceptWith(MST);
         loopEdges = new HashSet<Vector2Int>();
 
-        rooms = new List<IEdge[]>();
-        for (int roomIndex = 0; roomIndex < gridScale * gridScale; roomIndex++)
-        {
-            IEdge[] room = SimpleRoomCreator.CreateSimpleCircularRoom(minRadius * roomScale, maxRadius * roomScale, numberOfVertices);
-            rooms.Add(room);
-        }
-
         int i = 0;
-        while (i < numberOfLoops && edges.Count() > 0)
+        while (i < graphParams.numberOfLoops && edges.Count() > 0)
         {
             Vector2Int[] edgesToSelectFrom = edges.ToArray();
             int randomIndex = Random.Range(0, edgesToSelectFrom.Length);
             Vector2Int selectedEdge = edgesToSelectFrom[randomIndex];
             float edgeLength = Vector3.Distance(points[selectedEdge.x].ToVector3(), points[selectedEdge.y].ToVector3());
-            if (edgeLength > maxEdgeDistanceToCellSizeRatio * cellSize)
+            if (edgeLength > graphParams.maxEdgeDistanceToCellSizeRatio * cellSize)
             {
                 edges.Remove(selectedEdge);
                 continue;
@@ -66,7 +57,16 @@ public class VisualsManager : MonoBehaviour
             edges.Remove(selectedEdge);
             i++;
         }
+    }
 
+    public void GenerateRooms()
+    {
+        rooms = new List<IEdge[]>();
+        for (int roomIndex = 0; roomIndex < graphParams.gridScale * graphParams.gridScale; roomIndex++)
+        {
+            IEdge[] room = SimpleRoomCreator.CreateSimpleCircularRoom(roomParams.minRadius * roomParams.roomScale, roomParams.maxRadius * roomParams.roomScale, roomParams.numberOfVertices);
+            rooms.Add(room);
+        }
     }
 
     void OnDrawGizmos()
@@ -79,7 +79,7 @@ public class VisualsManager : MonoBehaviour
         {
             RenderGraph();
         }
-    
+
     }
 
     public void RenderRooms()
@@ -88,7 +88,7 @@ public class VisualsManager : MonoBehaviour
         {
             return;
         }
-        for(int roomIndex = 0; roomIndex < rooms.Count; roomIndex++)
+        for (int roomIndex = 0; roomIndex < rooms.Count; roomIndex++)
         {
             foreach (IEdge edge in rooms[roomIndex])
             {
@@ -141,4 +141,26 @@ public class VisualsManager : MonoBehaviour
             }
         }
     }
+
+    [System.Serializable]
+    public class GraphParams
+    {
+        public Vector2 topLeftCorner;
+        public Vector2 bottomRightCorner;
+        public int gridScale;
+        public int numberOfLoops;
+
+        public float maxEdgeDistanceToCellSizeRatio;
+    }
+
+    [System.Serializable]
+    public class RoomParams
+    {
+        public float minRadius;
+        public float maxRadius;
+        public int numberOfVertices;
+        public float roomScale;
+    }
 }
+
+
