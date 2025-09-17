@@ -9,6 +9,8 @@ using UnityEditor.UI;
 
 public class VisualsManager : MonoBehaviour
 {
+    public bool renderGraph;
+    public bool renderRoom;
     public Vector2 topLeftCorner;
     public Vector2 bottomRightCorner;
     public int gridScale;
@@ -20,6 +22,10 @@ public class VisualsManager : MonoBehaviour
     HashSet<Vector2Int> MST = new HashSet<Vector2Int>();
     HashSet<Vector2Int> loopEdges;
 
+    public IEdge[] roomEdges;
+    public float minRadius;
+    public float maxRadius;
+    public int numberOfVertices;
 
     public void Start()
     {
@@ -34,6 +40,12 @@ public class VisualsManager : MonoBehaviour
         HashSet<Vector2Int> edges = GraphCreator.CreateEdgeIndexSetFromDelaunayTriagnulation(delaunator);
         edges.ExceptWith(MST);
         loopEdges = new HashSet<Vector2Int>();
+
+        roomEdges = SimpleRoomCreator.CreateSimpleCircularRoom(minRadius, maxRadius, numberOfVertices);
+        foreach(IEdge edge in roomEdges) {
+            Debug.Log(edge.P.ToVector2().ToString() + " : " + edge.Q.ToVector2().ToString());
+
+        }
 
         int i = 0;
         while (i < numberOfLoops && edges.Count() > 0)
@@ -56,7 +68,30 @@ public class VisualsManager : MonoBehaviour
 
     void OnDrawGizmos()
     {
+        if (renderRoom)
+        {
+            RenderRoom();
+        }
+        if (renderGraph)
+        {
+            RenderGraph();
+        }
+    
+    }
+
+    public void RenderRoom()
+    {
+        foreach (IEdge edge in roomEdges)
+        {
+            Gizmos.color = Color.black;
+            Gizmos.DrawLine(edge.P.ToVector3(), edge.Q.ToVector3());
+        }
+    }
+
+    public void RenderGraph()
+    {
         IPoint[] points = delaunator?.Points;
+
         // Renders edges in the MST
         foreach (Vector2Int edge in MST)
         {
@@ -85,7 +120,6 @@ public class VisualsManager : MonoBehaviour
             }
         }
 
-        
         // Renders the Points on the graph
         if (points != null)
         {
