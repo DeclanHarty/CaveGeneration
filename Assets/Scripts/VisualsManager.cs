@@ -2,10 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DelaunatorSharp;
-using Unity.VisualScripting;
 using System.Linq;
 using DelaunatorSharp.Unity.Extensions;
-using UnityEditor.UI;
+using System;
 
 public class VisualsManager : MonoBehaviour
 {
@@ -13,8 +12,10 @@ public class VisualsManager : MonoBehaviour
     public bool renderRoom;
     public GraphParams graphParams;
     public RoomParams roomParams;
+    public ImageParams imageParams;
 
     private Delaunator delaunator;
+    public float cellSize;
     private IPoint[] points;
     private HashSet<Vector2Int> MST = new HashSet<Vector2Int>();
     private HashSet<Vector2Int> loopEdges;
@@ -25,18 +26,26 @@ public class VisualsManager : MonoBehaviour
     {
         GenerateGraph();
         GenerateRooms();
+        UpdateMap();
+
+        Comparer<float> comparer = Comparer<float>.Default;
+        Debug.Log(comparer.Compare(1, 2));
     }
+
 
     public void GenerateGraph()
     {
-        float cellSize = Mathf.Abs(graphParams.topLeftCorner.x - graphParams.bottomRightCorner.x) / graphParams.gridScale;
+        cellSize = Mathf.Abs(graphParams.topLeftCorner.x - graphParams.bottomRightCorner.x) / graphParams.gridScale;
 
+        // Creates a grid of points that are randomly offset
         points = GraphCreator.CreatePoints(graphParams.topLeftCorner, graphParams.bottomRightCorner, graphParams.gridScale);
         delaunator = GraphCreator.CreateDelauneyTriangulation(points);
 
+        // Creates Minimum Spanning Tree
         List<List<int>> ListMST = GraphCreator.CreateMinimumSpanningTree(delaunator);
         MST = PrimsAlgo.ConvertAdjacencyListToSet(ListMST);
 
+        // Gets edges from Delauney Triagnulation and Converts them to edges that correspond to the point indices
         HashSet<Vector2Int> edges = GraphCreator.CreateEdgeIndexSetFromDelaunayTriagnulation(delaunator);
         edges.ExceptWith(MST);
         loopEdges = new HashSet<Vector2Int>();
@@ -45,7 +54,7 @@ public class VisualsManager : MonoBehaviour
         while (i < graphParams.numberOfLoops && edges.Count() > 0)
         {
             Vector2Int[] edgesToSelectFrom = edges.ToArray();
-            int randomIndex = Random.Range(0, edgesToSelectFrom.Length);
+            int randomIndex = UnityEngine.Random.Range(0, edgesToSelectFrom.Length);
             Vector2Int selectedEdge = edgesToSelectFrom[randomIndex];
             float edgeLength = Vector3.Distance(points[selectedEdge.x].ToVector3(), points[selectedEdge.y].ToVector3());
             if (edgeLength > graphParams.maxEdgeDistanceToCellSizeRatio * cellSize)
@@ -59,6 +68,7 @@ public class VisualsManager : MonoBehaviour
         }
     }
 
+    // Creates Rooms
     public void GenerateRooms()
     {
         rooms = new List<IEdge[]>();
@@ -67,6 +77,43 @@ public class VisualsManager : MonoBehaviour
             IEdge[] room = SimpleRoomCreator.CreateSimpleCircularRoom(roomParams.minRadius * roomParams.roomScale, roomParams.maxRadius * roomParams.roomScale, roomParams.numberOfVertices);
             rooms.Add(room);
         }
+    }
+
+    public void UpdateMap()
+    {
+        Texture2D texture2D = new Texture2D(imageParams.imageResolution.x, imageParams.imageResolution.y);
+        Color[] pixels = new Color[imageParams.imageResolution.x * imageParams.imageResolution.y];
+
+        for (int i = 0; i < pixels.Length; i++)
+        {
+
+            pixels[i] = Color.gray;
+        }
+
+        List<IEdge[]> roomsCopy = SimpleRoomCreator.CreateDeepCopy(rooms);
+        Debug.Log(roomsCopy[0][0]);
+        for (int i = 0; i < roomsCopy.Count; i++)
+        {
+            IEdge[] translatedRoom = new IEdge[roomsCopy[i].Length];
+            SimpleRoomCreator.TranslateEdges(translatedRoom, .5f * points[i].ToVector2());
+
+            List<IEdge> roomToFill = new List<IEdge>(imageParams.EdgesFromWorldPosToImagePos(translatedRoom, graphParams.gridScale * cellSize));
+
+            List<Vector2Int> raster = Scanline.PolygonFill(roomToFill);
+            foreach (Vector2Int pixel in raster)
+            {
+                Vector2Int adjustedPoint = pixel;
+                Debug.Log(adjustedPoint);
+                pixels[adjustedPoint.x + imageParams.imageResolution.x * adjustedPoint.y] = Color.black;
+            }
+        }
+
+        texture2D.SetPixels(pixels);
+        texture2D.filterMode = FilterMode.Point;
+        texture2D.wrapMode = TextureWrapMode.Clamp;
+        texture2D.Apply();
+
+        imageParams.renderer.sharedMaterial.mainTexture = texture2D;
     }
 
     void OnDrawGizmos()
@@ -81,7 +128,7 @@ public class VisualsManager : MonoBehaviour
         }
 
     }
-
+    // Renders generated Rooms
     public void RenderRooms()
     {
         if (rooms == null)
@@ -160,6 +207,46 @@ public class VisualsManager : MonoBehaviour
         public float maxRadius;
         public int numberOfVertices;
         public float roomScale;
+    }
+
+    [System.Serializable]
+    public class ImageParams
+    {
+        public Vector2Int imageResolution;
+        public Vector2 imageSize;
+        public Renderer renderer;
+
+        public Vector2Int WorldPosToImagePos(Vector2 position, float gridRatio)
+        {
+            Vector2 translatedPosition = (position + new Vector2(imageSize.x / 2, imageSize.y / 2)) * (imageResolution.x / gridRatio);
+
+            Vector2Int roundedPosition = new Vector2Int((int)Mathf.Round(translatedPosition.x), (int)Mathf.Round(translatedPosition.y));
+
+            return roundedPosition;
+        }
+
+        public List<IEdge> EdgesFromWorldPosToImagePos(IEnumerable<IEdge> edges, float gridRatio)
+        {
+            List<IEdge> updatedEdges = new List<IEdge>();
+            foreach (IEdge edge in edges)
+            {
+                IEdge updatedEdge;
+
+                Point updatedP;
+                Point updatedQ;
+
+                Vector2Int updatedPPos = WorldPosToImagePos(edge.P.ToVector2(), gridRatio);
+                Vector2Int updatedQPos = WorldPosToImagePos(edge.Q.ToVector2(), gridRatio);
+
+                updatedP = new Point(updatedPPos.x, updatedPPos.y);
+                updatedQ = new Point(updatedQPos.x, updatedQPos.y);
+
+                updatedEdge = new Edge(0, updatedP, updatedQ);
+                updatedEdges.Add(updatedEdge);
+            }
+
+            return updatedEdges;
+        }
     }
 }
 

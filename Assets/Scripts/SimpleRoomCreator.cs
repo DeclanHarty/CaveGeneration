@@ -1,7 +1,9 @@
+using static System.Array;
 using System.Collections;
 using System.Collections.Generic;
 using DelaunatorSharp;
 using UnityEngine;
+using System.Linq;
 
 public class SimpleRoomCreator
 {
@@ -33,5 +35,29 @@ public class SimpleRoomCreator
         edges[numberOfVertices - 1] = new Edge(numberOfVertices - 1, points[numberOfVertices - 1], points[0]);
 
         return edges;
+    }
+
+    public static void TranslateEdges(IEnumerable<IEdge> edges, Vector2 translation)
+    {
+        foreach (IEdge edge in edges)
+        {
+            edge.P.X += translation.x;
+            edge.Q.X += translation.x;
+            edge.P.Y += translation.y;
+            edge.Q.Y += translation.y;
+        }
+    }
+
+    public static List<IEdge[]> CreateDeepCopy(List<IEdge[]> listToCopy)
+    {
+        List<IEdge[]> copy = new List<IEdge[]>();
+        foreach (IEdge[] room in listToCopy)
+        {
+            IEdge[] roomCopy = new IEdge[room.Length];
+            System.Array.Copy(room, roomCopy, room.Length);
+            copy.Add(roomCopy);
+        }
+
+        return copy;
     }
 }
