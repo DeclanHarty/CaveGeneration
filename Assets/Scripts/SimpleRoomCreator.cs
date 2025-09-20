@@ -37,15 +37,21 @@ public class SimpleRoomCreator
         return edges;
     }
 
-    public static void TranslateEdges(IEnumerable<IEdge> edges, Vector2 translation)
+    public static IEdge[] TranslateEdges(IEdge[] edges, Vector2 translation)
     {
-        foreach (IEdge edge in edges)
+        IEdge[] translatedEdges = new IEdge[edges.Length];
+
+        for (int i = 0; i < edges.Length; i++)
         {
-            edge.P.X += translation.x;
-            edge.Q.X += translation.x;
-            edge.P.Y += translation.y;
-            edge.Q.Y += translation.y;
+            IEdge edge = edges[i];
+            IPoint translatedP = new Point(edge.P.X + translation.x, edge.P.Y + translation.y);
+            IPoint translatedQ = new Point(edge.Q.X + translation.x, edge.Q.Y + translation.y);
+            IEdge translatedEdge = new Edge(edge.Index, translatedP, translatedQ);
+
+            translatedEdges[i] = translatedEdge;
         }
+
+        return translatedEdges;
     }
 
     public static List<IEdge[]> CreateDeepCopy(List<IEdge[]> listToCopy)
@@ -54,7 +60,7 @@ public class SimpleRoomCreator
         foreach (IEdge[] room in listToCopy)
         {
             IEdge[] roomCopy = new IEdge[room.Length];
-            System.Array.Copy(room, roomCopy, room.Length);
+            Copy(room, roomCopy, room.Length);
             copy.Add(roomCopy);
         }
 

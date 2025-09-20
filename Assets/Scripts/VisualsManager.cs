@@ -90,12 +90,11 @@ public class VisualsManager : MonoBehaviour
             pixels[i] = Color.gray;
         }
 
-        List<IEdge[]> roomsCopy = SimpleRoomCreator.CreateDeepCopy(rooms);
-        Debug.Log(roomsCopy[0][0]);
-        for (int i = 0; i < roomsCopy.Count; i++)
+        
+        for (int i = 0; i < rooms.Count; i++)
         {
-            IEdge[] translatedRoom = new IEdge[roomsCopy[i].Length];
-            SimpleRoomCreator.TranslateEdges(translatedRoom, .5f * points[i].ToVector2());
+            IEdge[] room = rooms[i];
+            IEdge[] translatedRoom = SimpleRoomCreator.TranslateEdges(room, points[i].ToVector2());
 
             List<IEdge> roomToFill = new List<IEdge>(imageParams.EdgesFromWorldPosToImagePos(translatedRoom, graphParams.gridScale * cellSize));
 
@@ -104,6 +103,11 @@ public class VisualsManager : MonoBehaviour
             {
                 Vector2Int adjustedPoint = pixel;
                 Debug.Log(adjustedPoint);
+                int index = adjustedPoint.x + imageParams.imageResolution.x * adjustedPoint.y;
+                if (index < 0 || index >= pixels.Length)
+                {
+                    continue;
+                }
                 pixels[adjustedPoint.x + imageParams.imageResolution.x * adjustedPoint.y] = Color.black;
             }
         }
