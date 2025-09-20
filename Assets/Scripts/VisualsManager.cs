@@ -14,22 +14,23 @@ public class VisualsManager : MonoBehaviour
     public RoomParams roomParams;
     public ImageParams imageParams;
 
+    public TunnelCreator tunnelCreator;
+
     private Delaunator delaunator;
     public float cellSize;
     private IPoint[] points;
-    private HashSet<Vector2Int> MST = new HashSet<Vector2Int>();
+    private HashSet<Vector2Int> MST;
     private HashSet<Vector2Int> loopEdges;
 
     public List<IEdge[]> rooms;
+    List<IEdge[]> tunnels;
 
     public void Start()
     {
         GenerateGraph();
         GenerateRooms();
         UpdateMap();
-
-        Comparer<float> comparer = Comparer<float>.Default;
-        Debug.Log(comparer.Compare(1, 2));
+        GenerateTunnels();
     }
 
 
@@ -79,36 +80,44 @@ public class VisualsManager : MonoBehaviour
         }
     }
 
+    // Creates Tunnels
+    public void GenerateTunnels()
+    {
+        
+    }
+
     public void UpdateMap()
     {
         Texture2D texture2D = new Texture2D(imageParams.imageResolution.x, imageParams.imageResolution.y);
         Color[] pixels = new Color[imageParams.imageResolution.x * imageParams.imageResolution.y];
 
+        // Sets the image to all gray to start
         for (int i = 0; i < pixels.Length; i++)
         {
-
             pixels[i] = Color.gray;
         }
 
-        
+        // Colors each room black
         for (int i = 0; i < rooms.Count; i++)
         {
             IEdge[] room = rooms[i];
-            IEdge[] translatedRoom = SimpleRoomCreator.TranslateEdges(room, points[i].ToVector2());
+            IEdge[] translatedRoom = SimpleRoomCreator.TranslateRoom(room, points[i].ToVector2());
 
             List<IEdge> roomToFill = new List<IEdge>(imageParams.EdgesFromWorldPosToImagePos(translatedRoom, graphParams.gridScale * cellSize));
 
             List<Vector2Int> raster = Scanline.PolygonFill(roomToFill);
+
             foreach (Vector2Int pixel in raster)
             {
-                Vector2Int adjustedPoint = pixel;
-                Debug.Log(adjustedPoint);
-                int index = adjustedPoint.x + imageParams.imageResolution.x * adjustedPoint.y;
-                if (index < 0 || index >= pixels.Length)
+                // Check if pixel is outside image
+                // Skip if it is
+                if (pixel.x < 0 || pixel.x >= imageParams.imageResolution.x || pixel.y < 0 || pixel.y >= imageParams.imageResolution.y)
                 {
                     continue;
                 }
-                pixels[adjustedPoint.x + imageParams.imageResolution.x * adjustedPoint.y] = Color.black;
+                // Calculate index in pixel array that corresponds to pixel position
+                int index = pixel.x + imageParams.imageResolution.x * pixel.y;
+                pixels[index] = Color.black;
             }
         }
 
@@ -130,8 +139,19 @@ public class VisualsManager : MonoBehaviour
         {
             RenderGraph();
         }
-
+        RenderTunnelTest();
     }
+    // Render Tunnel
+    public void RenderTunnelTest()
+    {
+        
+        // foreach (IEdge edge in tunnel)
+        // {
+        //     Gizmos.color = Color.black;
+        //     Gizmos.DrawLine(edge.P.ToVector3(), edge.Q.ToVector3());
+        // }
+    }
+
     // Renders generated Rooms
     public void RenderRooms()
     {
@@ -154,12 +174,14 @@ public class VisualsManager : MonoBehaviour
     {
         IPoint[] points = delaunator?.Points;
 
+        IEdge[] MSTAsEdges = GraphCreator.ConvertIndexRepresentationToEdges(points, MST.ToArray());
+
         // Renders edges in the MST
-        foreach (Vector2Int edge in MST)
+        foreach (IEdge edge in MSTAsEdges)
         {
             Gizmos.color = Color.white;
-            Vector3 startPoint = new Vector3((float)points[edge.x].X, (float)points[edge.x].Y);
-            Vector3 endPoint = new Vector3((float)points[edge.y].X, (float)points[edge.y].Y);
+            Vector3 startPoint = new Vector3((float)edge.P.X, (float)edge.P.Y);
+            Vector3 endPoint = new Vector3((float)edge.Q.X, (float)edge.Q.Y);
             Gizmos.DrawLine(startPoint, endPoint);
         }
 
@@ -175,10 +197,11 @@ public class VisualsManager : MonoBehaviour
                 Gizmos.DrawLine(points[edge.x].ToVector3(), points[edge.y].ToVector3());
             }
             // Renders the added Loops
-            foreach (Vector2Int edge in loopEdges)
+            IEdge[] loopEdgesAsEdges = GraphCreator.ConvertIndexRepresentationToEdges(points, loopEdges.ToArray());
+            foreach (IEdge edge in loopEdgesAsEdges)
             {
                 Gizmos.color = Color.green;
-                Gizmos.DrawLine(points[edge.x].ToVector3(), points[edge.y].ToVector3());
+                Gizmos.DrawLine(edge.P.ToVector3(), edge.Q.ToVector3());
             }
         }
 
@@ -222,9 +245,13 @@ public class VisualsManager : MonoBehaviour
 
         public Vector2Int WorldPosToImagePos(Vector2 position, float gridRatio)
         {
-            Vector2 translatedPosition = (position + new Vector2(imageSize.x / 2, imageSize.y / 2)) * (imageResolution.x / gridRatio);
+            Vector2 translatedPosition = position + new Vector2(imageSize.x / 2, imageSize.y / 2);
+            float lerpX = Mathf.Lerp(0, imageResolution.x - 1, translatedPosition.x / imageSize.x);
+            float lerpY = Mathf.Lerp(0, imageResolution.y - 1, translatedPosition.y / imageSize.y);
 
-            Vector2Int roundedPosition = new Vector2Int((int)Mathf.Round(translatedPosition.x), (int)Mathf.Round(translatedPosition.y));
+            Vector2 scaledPosition = new Vector2(lerpX, lerpY);
+
+            Vector2Int roundedPosition = new Vector2Int((int)Mathf.Round(scaledPosition.x), (int)Mathf.Round(scaledPosition.y));
 
             return roundedPosition;
         }

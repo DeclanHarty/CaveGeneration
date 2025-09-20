@@ -299,7 +299,7 @@ Transform:
   m_GameObject: {fileID: 832588023}
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.2, y: 1, z: 1.2}
+  m_LocalScale: {x: 1.4, y: 1, z: 1.2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1894989476}
@@ -367,22 +367,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   renderGraph: 0
-  renderRoom: 1
+  renderRoom: 0
   graphParams:
     topLeftCorner: {x: -5, y: 5}
     bottomRightCorner: {x: 5, y: -5}
     gridScale: 4
     numberOfLoops: 4
-    maxEdgeDistanceToCellSizeRatio: 2
+    maxEdgeDistanceToCellSizeRatio: 1.5
   roomParams:
     minRadius: 3
     maxRadius: 6
     numberOfVertices: 24
     roomScale: 0.1
   imageParams:
-    imageResolution: {x: 1000, y: 1000}
-    imageSize: {x: 10, y: 10}
+    imageResolution: {x: 1166, y: 1000}
+    imageSize: {x: 14, y: 12}
     renderer: {fileID: 832588025}
+  tunnelCreator:
+    resolutionPerUnit: 5
+    randomDistributionRadius: 0.1
   cellSize: 0
 --- !u!4 &1993088350
 Transform:

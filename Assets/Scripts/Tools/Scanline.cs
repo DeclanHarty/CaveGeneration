@@ -91,7 +91,6 @@ public static class Scanline
     // Active Table is made of float[3] = {maxY, currentX, slope_inv}
     public static void UpdateScanline(float y_value, List<float[]> globalTable, List<float[]> activeTable)
     {
-        Debug.Log(activeTable.Count);
         int globalTableLength = globalTable.Count;
         int activeTableLength = activeTable.Count;
         List<float[]> globalCopy = new List<float[]>();
@@ -157,18 +156,22 @@ public static class Scanline
         // Init Scanline
         UpdateScanline(scanline_y, globalTable, activeTable);
 
-        while(activeTable.Count > 0){
-            for (int i = 0; i < activeTable.Count; i += 2) {
-                if (i >= activeTable.Count || i + 1 >= activeTable.Count) {
+        while (activeTable.Count > 0)
+        {
+            for (int i = 0; i < activeTable.Count; i += 2)
+            {
+                if (i >= activeTable.Count || i + 1 >= activeTable.Count)
+                {
                     activeTable.Clear();
                     break;
                 }
                 int endValue = (int)Mathf.Round(Mathf.Max(activeTable[i][1], activeTable[i + 1][1]));
                 int startValue = (int)Mathf.Round(Mathf.Min(activeTable[i][1], activeTable[i + 1][1]));
-                for(int x = startValue; x < endValue; x++){
+                for (int x = startValue; x < endValue; x++)
+                {
                     raster.Add(new Vector2Int(x, scanline_y));
-                }  
-                
+                }
+
             }
 
             scanline_y++;
@@ -177,6 +180,8 @@ public static class Scanline
 
         return raster;
     }
+
+
 
 
 }

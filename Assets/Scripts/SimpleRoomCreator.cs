@@ -37,7 +37,7 @@ public class SimpleRoomCreator
         return edges;
     }
 
-    public static IEdge[] TranslateEdges(IEdge[] edges, Vector2 translation)
+    public static IEdge[] TranslateRoom(IEdge[] edges, Vector2 translation)
     {
         IEdge[] translatedEdges = new IEdge[edges.Length];
 
@@ -52,18 +52,5 @@ public class SimpleRoomCreator
         }
 
         return translatedEdges;
-    }
-
-    public static List<IEdge[]> CreateDeepCopy(List<IEdge[]> listToCopy)
-    {
-        List<IEdge[]> copy = new List<IEdge[]>();
-        foreach (IEdge[] room in listToCopy)
-        {
-            IEdge[] roomCopy = new IEdge[room.Length];
-            Copy(room, roomCopy, room.Length);
-            copy.Add(roomCopy);
-        }
-
-        return copy;
     }
 }

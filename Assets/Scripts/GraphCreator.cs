@@ -75,6 +75,17 @@ public class GraphCreator
 
         return edgeIndices;
     }
+
+    public static IEdge[] ConvertIndexRepresentationToEdges(IPoint[] points, Vector2Int[] indexEdges)
+    {
+        IEdge[] edges = new IEdge[indexEdges.Length];
+        for (int i = 0; i < indexEdges.Length; i++)
+        {
+            edges[i] = new Edge(i, points[indexEdges[i].x], points[indexEdges[i].y]);
+        }
+
+        return edges;
+    }
     
 
 
