@@ -383,7 +383,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   renderGraph: 0
   renderRoom: 0
-  renderTunnels: 1
+  renderTunnels: 0
   graphParams:
     topLeftCorner: {x: -5, y: 5}
     bottomRightCorner: {x: 5, y: -5}
@@ -394,16 +394,18 @@ MonoBehaviour:
     minRadius: 3
     maxRadius: 6
     numberOfVertices: 24
+    splineVerticesPerUnit: 20
     roomScale: 0.1
   imageParams:
     imageResolution: {x: 1166, y: 1000}
     imageSize: {x: 14, y: 12}
     renderer: {fileID: 832588025}
   tunnelCreator:
-    resolutionPerUnit: 5
-    splineUpscale: 5
-    randomDistributionRadius: 0.15
-  cellSize: 0
+    resolutionPerUnit: 2
+    splineUpscale: 10
+    randomDistributionRadius: 0.25
+    tunnelThickness: 0.1
+  cellSize: 2.5
 --- !u!4 &1993088350
 Transform:
   m_ObjectHideFlags: 0

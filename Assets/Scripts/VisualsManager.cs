@@ -26,12 +26,19 @@ public class VisualsManager : MonoBehaviour
     public List<IEdge[]> rooms;
     List<IEdge[]> tunnels;
 
+    private Color[] pixels;
+
     public void Start()
+    {
+        RegenerateMap();
+    }
+
+    public void RegenerateMap()
     {
         GenerateGraph();
         GenerateRooms();
-        UpdateMap();
         GenerateTunnels();
+        InitializeMap();
     }
 
 
@@ -76,7 +83,7 @@ public class VisualsManager : MonoBehaviour
         rooms = new List<IEdge[]>();
         for (int roomIndex = 0; roomIndex < graphParams.gridScale * graphParams.gridScale; roomIndex++)
         {
-            IEdge[] room = SimpleRoomCreator.CreateSimpleCircularRoom(roomParams.minRadius * roomParams.roomScale, roomParams.maxRadius * roomParams.roomScale, roomParams.numberOfVertices);
+            IEdge[] room = SimpleRoomCreator.CreateSmoothCircularRoom(roomParams.minRadius * roomParams.roomScale, roomParams.maxRadius * roomParams.roomScale, roomParams.numberOfVertices, roomParams.splineVerticesPerUnit);
             rooms.Add(room);
         }
     }
@@ -100,10 +107,29 @@ public class VisualsManager : MonoBehaviour
         }
     }
 
+    public void InitializeMap()
+    {
+        Texture2D texture2D = new Texture2D(imageParams.imageResolution.x, imageParams.imageResolution.y);
+        pixels = new Color[imageParams.imageResolution.x * imageParams.imageResolution.y];
+
+        // Sets the image to all gray to start
+        for (int i = 0; i < pixels.Length; i++)
+        {
+            pixels[i] = Color.gray;
+        }
+
+        texture2D.SetPixels(pixels);
+        texture2D.filterMode = FilterMode.Point;
+        texture2D.wrapMode = TextureWrapMode.Clamp;
+        texture2D.Apply();
+
+        imageParams.renderer.sharedMaterial.mainTexture = texture2D;
+    }
+
     public void UpdateMap()
     {
         Texture2D texture2D = new Texture2D(imageParams.imageResolution.x, imageParams.imageResolution.y);
-        Color[] pixels = new Color[imageParams.imageResolution.x * imageParams.imageResolution.y];
+        pixels = new Color[imageParams.imageResolution.x * imageParams.imageResolution.y];
 
         // Sets the image to all gray to start
         for (int i = 0; i < pixels.Length; i++)
@@ -112,6 +138,24 @@ public class VisualsManager : MonoBehaviour
         }
 
         // Colors each room black
+        RasterizeRooms();
+
+        // Colors the tunnels black
+        RasterizeTunnels();
+
+
+        texture2D.SetPixels(pixels);
+        texture2D.filterMode = FilterMode.Point;
+        texture2D.wrapMode = TextureWrapMode.Clamp;
+        texture2D.Apply();
+
+        imageParams.renderer.sharedMaterial.mainTexture = texture2D;
+    }
+
+    public void RasterizeRooms()
+    {
+        Texture2D texture2D = new Texture2D(imageParams.imageResolution.x, imageParams.imageResolution.y);
+
         for (int i = 0; i < rooms.Count; i++)
         {
             IEdge[] room = rooms[i];
@@ -120,6 +164,38 @@ public class VisualsManager : MonoBehaviour
             List<IEdge> roomToFill = new List<IEdge>(imageParams.EdgesFromWorldPosToImagePos(translatedRoom, graphParams.gridScale * cellSize));
 
             List<Vector2Int> raster = Scanline.PolygonFill(roomToFill);
+
+            foreach (Vector2Int pixel in raster)
+            {
+                // Check if pixel is outside image
+                // Skip if it is
+                if (pixel.x < 0 || pixel.x >= imageParams.imageResolution.x || pixel.y < 0 || pixel.y >= imageParams.imageResolution.y)
+                {
+                    continue;
+                }
+                // Calculate index in pixel array that corresponds to pixel position
+                int index = pixel.x + imageParams.imageResolution.x * pixel.y;
+                pixels[index] = Color.black;
+            }
+        }
+
+        texture2D.SetPixels(pixels);
+        texture2D.filterMode = FilterMode.Point;
+        texture2D.wrapMode = TextureWrapMode.Clamp;
+        texture2D.Apply();
+
+        imageParams.renderer.sharedMaterial.mainTexture = texture2D;
+    }
+
+    public void RasterizeTunnels()
+    {
+        Texture2D texture2D = new Texture2D(imageParams.imageResolution.x, imageParams.imageResolution.y);
+
+        foreach (IEdge[] tunnel in tunnels)
+        {
+            List<IEdge> tunnelToFill = new List<IEdge>(imageParams.EdgesFromWorldPosToImagePos(tunnel, graphParams.gridScale * cellSize));
+
+            List<Vector2Int> raster = Scanline.PolygonFill(tunnelToFill);
 
             foreach (Vector2Int pixel in raster)
             {
@@ -172,7 +248,6 @@ public class VisualsManager : MonoBehaviour
             {
                 Gizmos.color = Color.black;
                 Gizmos.DrawLine(edge.P.ToVector3(), edge.Q.ToVector3());
-                Gizmos.DrawSphere(edge.P.ToVector3(), .1f);
             }
         }
 
@@ -263,6 +338,7 @@ public class VisualsManager : MonoBehaviour
         public float minRadius;
         public float maxRadius;
         public int numberOfVertices;
+        public float splineVerticesPerUnit;
         public float roomScale;
     }
 
