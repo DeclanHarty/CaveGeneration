@@ -10,6 +10,7 @@ public class VisualsManager : MonoBehaviour
 {
     public bool renderGraph;
     public bool renderRoom;
+    public bool renderTunnels;
     public GraphParams graphParams;
     public RoomParams roomParams;
     public ImageParams imageParams;
@@ -83,7 +84,20 @@ public class VisualsManager : MonoBehaviour
     // Creates Tunnels
     public void GenerateTunnels()
     {
-        
+        tunnels = new List<IEdge[]>();
+        IEdge[] mstEdges = GraphCreator.ConvertIndexRepresentationToEdges(points, MST.ToArray());
+
+        foreach (IEdge edge in mstEdges)
+        {
+            tunnels.Add(tunnelCreator.CreateTunnel(edge));
+        }
+
+        IEdge[] loopEdge = GraphCreator.ConvertIndexRepresentationToEdges(points, loopEdges.ToArray());
+
+        foreach (IEdge edge in loopEdge)
+        {
+            tunnels.Add(tunnelCreator.CreateTunnel(edge));
+        }
     }
 
     public void UpdateMap()
@@ -139,17 +153,29 @@ public class VisualsManager : MonoBehaviour
         {
             RenderGraph();
         }
-        RenderTunnelTest();
+        if (renderTunnels)
+        {
+            RenderTunnels();
+        }
+
     }
-    // Render Tunnel
-    public void RenderTunnelTest()
+    // Render Tunnels
+    public void RenderTunnels()
     {
-        
-        // foreach (IEdge edge in tunnel)
-        // {
-        //     Gizmos.color = Color.black;
-        //     Gizmos.DrawLine(edge.P.ToVector3(), edge.Q.ToVector3());
-        // }
+        if (tunnels == null)
+        {
+            return;
+        }
+        foreach (IEdge[] tunnel in tunnels)
+        {
+            foreach (IEdge edge in tunnel)
+            {
+                Gizmos.color = Color.black;
+                Gizmos.DrawLine(edge.P.ToVector3(), edge.Q.ToVector3());
+                Gizmos.DrawSphere(edge.P.ToVector3(), .1f);
+            }
+        }
+
     }
 
     // Renders generated Rooms
@@ -174,36 +200,40 @@ public class VisualsManager : MonoBehaviour
     {
         IPoint[] points = delaunator?.Points;
 
-        IEdge[] MSTAsEdges = GraphCreator.ConvertIndexRepresentationToEdges(points, MST.ToArray());
-
-        // Renders edges in the MST
-        foreach (IEdge edge in MSTAsEdges)
+        if (MST != null)
         {
-            Gizmos.color = Color.white;
-            Vector3 startPoint = new Vector3((float)edge.P.X, (float)edge.P.Y);
-            Vector3 endPoint = new Vector3((float)edge.Q.X, (float)edge.Q.Y);
-            Gizmos.DrawLine(startPoint, endPoint);
+
+            IEdge[] MSTAsEdges = GraphCreator.ConvertIndexRepresentationToEdges(points, MST.ToArray());
+
+            // Renders edges in the MST
+            foreach (IEdge edge in MSTAsEdges)
+            {
+                Gizmos.color = Color.white;
+                Vector3 startPoint = new Vector3((float)edge.P.X, (float)edge.P.Y);
+                Vector3 endPoint = new Vector3((float)edge.Q.X, (float)edge.Q.Y);
+                Gizmos.DrawLine(startPoint, endPoint);
+            }
         }
 
         // Renders all other edges of the Delauney Triangulation
-        if (delaunator != null)
-        {
-            HashSet<Vector2Int> edgesP = GraphCreator.CreateEdgeIndexSetFromDelaunayTriagnulation(delaunator);
-            edgesP.ExceptWith(MST);
-            edgesP.ExceptWith(loopEdges);
-            foreach (Vector2Int edge in edgesP)
+            if (delaunator != null)
             {
-                Gizmos.color = Color.black;
-                Gizmos.DrawLine(points[edge.x].ToVector3(), points[edge.y].ToVector3());
+                HashSet<Vector2Int> edgesP = GraphCreator.CreateEdgeIndexSetFromDelaunayTriagnulation(delaunator);
+                edgesP.ExceptWith(MST);
+                edgesP.ExceptWith(loopEdges);
+                foreach (Vector2Int edge in edgesP)
+                {
+                    Gizmos.color = Color.black;
+                    Gizmos.DrawLine(points[edge.x].ToVector3(), points[edge.y].ToVector3());
+                }
+                // Renders the added Loops
+                IEdge[] loopEdgesAsEdges = GraphCreator.ConvertIndexRepresentationToEdges(points, loopEdges.ToArray());
+                foreach (IEdge edge in loopEdgesAsEdges)
+                {
+                    Gizmos.color = Color.green;
+                    Gizmos.DrawLine(edge.P.ToVector3(), edge.Q.ToVector3());
+                }
             }
-            // Renders the added Loops
-            IEdge[] loopEdgesAsEdges = GraphCreator.ConvertIndexRepresentationToEdges(points, loopEdges.ToArray());
-            foreach (IEdge edge in loopEdgesAsEdges)
-            {
-                Gizmos.color = Color.green;
-                Gizmos.DrawLine(edge.P.ToVector3(), edge.Q.ToVector3());
-            }
-        }
 
         // Renders the Points on the graph
         if (points != null)
