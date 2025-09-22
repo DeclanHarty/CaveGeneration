@@ -109,8 +109,11 @@ public class TunnelCreator
             Vector3 tangent = SplineUtility.EvaluateTangent(spline, i * tPerVertex);
             IPoint point = new Point(position.x, position.y);
             points[i] = point;
-            tangents[i] = tangent;
+            tangents[i] = tangent.normalized;
         }
+
+        Vector3 firstTangent = SplineUtility.EvaluateTangent(spline, 0.0001f);
+        tangents[0] = firstTangent.normalized;
 
         IEdge[] edges = new IEdge[2 * points.Length];
 
@@ -119,6 +122,8 @@ public class TunnelCreator
         {
             IPoint startPoint = points[i];
             IPoint endPoint = points[i + 1];
+
+            Debug.Log(tangents[i]);
 
             Vector2 startPointOrthag = Vector2.Perpendicular((Vector2)tangents[i]);
             Vector2 startPointPosDisplace = startPoint.ToVector2() + tunnelThickness * startPointOrthag;
@@ -133,8 +138,9 @@ public class TunnelCreator
         }
 
         // Cap them off
-        edges[edges.Length - 2] = new Edge(edges.Length - 2, edges[0].P, edges[1].P);
-        edges[edges.Length - 1] = new Edge(edges.Length - 1, edges[edges.Length - 4].Q, edges[edges.Length - 3].Q);
+        edges[edges.Length - 2] = new Edge(edges.Length - 1, edges[edges.Length - 4].Q, edges[edges.Length - 3].Q);
+        edges[edges.Length - 1] = new Edge(edges.Length - 2, edges[0].P, edges[1].P);
+       
 
         return edges;
     }
