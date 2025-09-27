@@ -12,7 +12,9 @@ public class TunnelCreator
     public float splineUpscale;
     public float randomDistributionRadius;
     public float tunnelThickness;
-    public IEdge[] CreateTunnel(IEdge edge)
+    public float minTunnelThickness;
+    public float maxTunnelThickness;
+    public List<IEdge[]> CreateTunnel(IEdge edge)
     {
         List<IPoint> points = new List<IPoint>();
 
@@ -21,7 +23,10 @@ public class TunnelCreator
         int numberOfExtraPoints = Mathf.RoundToInt(resolutionPerUnit * edgeLength);
         Vector2 distanceBetweenEachPoint = (edge.Q.ToVector2() - edge.P.ToVector2()) / numberOfExtraPoints;
 
-        for (int i = 0; i < numberOfExtraPoints; i++)
+        // Add starting position
+        points.Add(edge.P);
+
+        for (int i = 1; i < numberOfExtraPoints; i++)
         {
             // Vertex position before displacement
             Vector2 center = new Vector2((float)edge.P.X + distanceBetweenEachPoint.x * i, (float)edge.P.Y + distanceBetweenEachPoint.y * i);
@@ -34,17 +39,22 @@ public class TunnelCreator
             points.Add(newPoint);
         }
 
+        // Add End position
         points.Add(edge.Q);
 
+        // Initialize Baseline array
         IEdge[] baseLine = new IEdge[points.Count - 1];
 
+        // Package points into edges
         for (int i = 0; i < points.Count - 1; i++)
         {
             baseLine[i] = new Edge(i, points[i], points[i + 1]);
         }
 
+        // Convert baseline into spline
         Spline spline = ConvertBaseLineToSpline(baseLine);
-        IEdge[] thickSpline = CreatePolygonLine(spline);
+        // Create polygon from spline
+        List<IEdge[]> thickSpline = CreatePolygonLine(spline);
 
         return thickSpline;
     }
@@ -66,34 +76,9 @@ public class TunnelCreator
         }
 
         return spline;
-
-        // float tunnelLength = spline.GetLength();
-
-        // int numberOfVertices = Mathf.RoundToInt(resolutionPerUnit * splineUpscale * tunnelLength);
-        // float tPerVertex = 1f / (float)numberOfVertices;
-
-        // // Get Points and Tangents from the spline
-        // IPoint[] points = new IPoint[numberOfVertices + 1];
-        // for (int i = 0; i < points.Length; i++)
-        // {
-        //     Vector3 position = SplineUtility.EvaluatePosition(spline, i * tPerVertex);
-        //     IPoint point = new Point(position.x, position.y);
-        //     points[i] = point;
-        // }
-
-        // IEdge[] newEdges = new IEdge[points.Length - 1];
-        // // Package Points into edges
-        // for (int i = 0; i < points.Length - 1; i++)
-        // {
-        //     IEdge edge = new Edge(i, points[i], points[i + 1]);
-        //     newEdges[i] = edge;
-        // }
-
-        // return newEdges;
-
     }
 
-    public IEdge[] CreatePolygonLine(Spline spline)
+    public List<IEdge[]> CreatePolygonLine(Spline spline)
     {
         float tunnelLength = spline.GetLength();
 
@@ -115,34 +100,47 @@ public class TunnelCreator
         Vector3 firstTangent = SplineUtility.EvaluateTangent(spline, 0.0001f);
         tangents[0] = firstTangent.normalized;
 
-        IEdge[] edges = new IEdge[2 * points.Length];
+        List<IEdge[]> tunnelSegments = new List<IEdge[]>();
+
+        float[] thicknessAtPoint = new float[points.Length];
+        // Create the thickness 
+        for (int i = 0; i < points.Length; i++)
+        {
+            thicknessAtPoint[i] = Random.Range(minTunnelThickness, maxTunnelThickness);
+        }
 
         // Create the two "Parallel Lines"
         for (int i = 0; i < points.Length - 1; i++)
         {
+            IEdge[] tunnelSegment = new IEdge[4];
+
             IPoint startPoint = points[i];
             IPoint endPoint = points[i + 1];
 
-            Debug.Log(tangents[i]);
-
             Vector2 startPointOrthag = Vector2.Perpendicular((Vector2)tangents[i]);
-            Vector2 startPointPosDisplace = startPoint.ToVector2() + tunnelThickness * startPointOrthag;
-            Vector2 startPointNegDisplace = startPoint.ToVector2() - tunnelThickness * startPointOrthag;
+            Vector2 startPointPosDisplace = startPoint.ToVector2() + thicknessAtPoint[i] * startPointOrthag;
+            Vector2 startPointNegDisplace = startPoint.ToVector2() - thicknessAtPoint[i] * startPointOrthag;
 
             Vector2 endPointOrthag = Vector2.Perpendicular((Vector2)tangents[i + 1]);
-            Vector2 endPointPosDisplace = endPoint.ToVector2() + tunnelThickness * endPointOrthag;
-            Vector2 endPointNegDisplace = endPoint.ToVector2() - tunnelThickness * endPointOrthag;
+            Vector2 endPointPosDisplace = endPoint.ToVector2() + thicknessAtPoint[i+1] * endPointOrthag;
+            Vector2 endPointNegDisplace = endPoint.ToVector2() - thicknessAtPoint[i+1] * endPointOrthag;
 
-            edges[2 * i] = new Edge(2 * i, new Point(startPointPosDisplace.x, startPointPosDisplace.y), new Point(endPointPosDisplace.x, endPointPosDisplace.y));
-            edges[2 * i + 1] = new Edge(2 * i, new Point(startPointNegDisplace.x, startPointNegDisplace.y), new Point(endPointNegDisplace.x, endPointNegDisplace.y));
+            IPoint startPointPos = new Point(startPointPosDisplace.x, startPointPosDisplace.y);
+            IPoint endPointPos = new Point(endPointPosDisplace.x, endPointPosDisplace.y);
+            IPoint startPointNeg = new Point(startPointNegDisplace.x, startPointNegDisplace.y);
+            IPoint endPointNeg = new Point(endPointNegDisplace.x, endPointNegDisplace.y);
+
+            tunnelSegment[0] = new Edge(0, startPointPos, endPointPos);
+            tunnelSegment[1] = new Edge(1, startPointNeg, endPointNeg);
+            tunnelSegment[2] = new Edge(1, startPointNeg, startPointPos);
+            tunnelSegment[3] = new Edge(1, endPointNeg, endPointPos);
+
+
+            tunnelSegments.Add(tunnelSegment);
         }
-
-        // Cap them off
-        edges[edges.Length - 2] = new Edge(edges.Length - 1, edges[edges.Length - 4].Q, edges[edges.Length - 3].Q);
-        edges[edges.Length - 1] = new Edge(edges.Length - 2, edges[0].P, edges[1].P);
        
 
-        return edges;
+        return tunnelSegments;
     }
 
     public Vector2 GetRandomPositionInCircle(float randomDistributionRadius)

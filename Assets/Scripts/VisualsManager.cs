@@ -24,7 +24,7 @@ public class VisualsManager : MonoBehaviour
     private HashSet<Vector2Int> loopEdges;
 
     public List<IEdge[]> rooms;
-    List<IEdge[]> tunnels;
+    List<IEdge[]> tunnelSegments;
 
     private Color[] pixels;
 
@@ -91,19 +91,19 @@ public class VisualsManager : MonoBehaviour
     // Creates Tunnels
     public void GenerateTunnels()
     {
-        tunnels = new List<IEdge[]>();
+        tunnelSegments = new List<IEdge[]>();
         IEdge[] mstEdges = GraphCreator.ConvertIndexRepresentationToEdges(points, MST.ToArray());
 
         foreach (IEdge edge in mstEdges)
         {
-            tunnels.Add(tunnelCreator.CreateTunnel(edge));
+            tunnelSegments.AddRange(tunnelCreator.CreateTunnel(edge));
         }
 
         IEdge[] loopEdge = GraphCreator.ConvertIndexRepresentationToEdges(points, loopEdges.ToArray());
 
         foreach (IEdge edge in loopEdge)
         {
-            tunnels.Add(tunnelCreator.CreateTunnel(edge));
+            tunnelSegments.AddRange(tunnelCreator.CreateTunnel(edge));
         }
     }
 
@@ -191,9 +191,9 @@ public class VisualsManager : MonoBehaviour
     {
         Texture2D texture2D = new Texture2D(imageParams.imageResolution.x, imageParams.imageResolution.y);
 
-        foreach (IEdge[] tunnel in tunnels)
+        foreach (IEdge[] tunnelSegment in tunnelSegments)
         {
-            List<IEdge> tunnelToFill = new List<IEdge>(imageParams.EdgesFromWorldPosToImagePos(tunnel, graphParams.gridScale * cellSize));
+            List<IEdge> tunnelToFill = new List<IEdge>(imageParams.EdgesFromWorldPosToImagePos(tunnelSegment, graphParams.gridScale * cellSize));
 
             List<Vector2Int> raster = Scanline.PolygonFill(tunnelToFill);
 
@@ -238,13 +238,13 @@ public class VisualsManager : MonoBehaviour
     // Render Tunnels
     public void RenderTunnels()
     {
-        if (tunnels == null)
+        if (tunnelSegments == null)
         {
             return;
         }
-        foreach (IEdge[] tunnel in tunnels)
+        foreach (IEdge[] tunnelSegment in tunnelSegments)
         {
-            foreach (IEdge edge in tunnel)
+            foreach (IEdge edge in tunnelSegment)
             {
                 Gizmos.color = Color.black;
                 Gizmos.DrawLine(edge.P.ToVector3(), edge.Q.ToVector3());

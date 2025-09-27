@@ -381,9 +381,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8ae68e850c2c394b97ced18c8fd4089, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  renderGraph: 1
-  renderRoom: 1
-  renderTunnels: 1
+  renderGraph: 0
+  renderRoom: 0
+  renderTunnels: 0
   graphParams:
     topLeftCorner: {x: -5, y: 5}
     bottomRightCorner: {x: 5, y: -5}
@@ -401,8 +401,8 @@ MonoBehaviour:
     imageSize: {x: 14, y: 12}
     renderer: {fileID: 832588025}
   tunnelCreator:
-    resolutionPerUnit: 2
-    splineUpscale: 10
+    resolutionPerUnit: 4
+    splineUpscale: 4
     randomDistributionRadius: 0.25
     tunnelThickness: 0.08
   cellSize: 2.5

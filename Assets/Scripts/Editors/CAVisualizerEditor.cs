@@ -14,6 +14,11 @@ public class CAVisualizerEditor : Editor
     {
         base.OnInspectorGUI();
 
+        if (GUILayout.Button("Make Starter Map"))
+        {
+            CAV.CreateMap();
+        }
+
         if (GUILayout.Button("Run CA"))
         {
             CAV.PerformCA();

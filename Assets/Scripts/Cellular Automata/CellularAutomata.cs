@@ -39,7 +39,7 @@ public class CellularAutomata
         }
     }
 
-    public static int GetNumberOfWallNeighbors(Vector2Int center, int[,] map, bool OOBIsWall = true)
+    public static int GetNumberOfWallNeighbors(Vector2Int center, int[,] map, bool borderIsWall = true, bool OOBIsWall = true)
     {
         int numberOfWallNeighbors = 0;
         int mapXLength = map.GetLength(0);
@@ -52,7 +52,15 @@ public class CellularAutomata
             {
                 if (OOBIsWall)
                 {
-                    numberOfWallNeighbors += 2;
+                    if (borderIsWall)
+                    {
+                        return 8;
+                    }
+                    else
+                    {
+                        numberOfWallNeighbors++;
+                    }
+                    
                 }
             }
             else
