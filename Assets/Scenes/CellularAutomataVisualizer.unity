@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d7f02405bffd8242b7e4927c8290d36, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapSize: {x: 40, y: 40}
+  mapSize: {x: 30, y: 30}
   cutoff: 0.45
   renderer: {fileID: 673908892}
 --- !u!4 &280417635
@@ -372,5 +372,5 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 325723541}
-  - {fileID: 673908895}
   - {fileID: 280417635}
+  - {fileID: 673908895}

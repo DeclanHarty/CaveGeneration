@@ -3,12 +3,16 @@ using UnityEngine;
 public class CellularAutomataVisualizer : MonoBehaviour
 {
     public Vector2Int mapSize;
+    public Vector2 imageSize;
     [Range(0, 1)]
     public float cutoff;
-
     public Renderer renderer;
 
     private int[,] map;
+
+
+
+
 
     public void Start()
     {
@@ -41,7 +45,7 @@ public class CellularAutomataVisualizer : MonoBehaviour
         {
             for (int y = 0; y < mapSize.y; y++)
             {
-                pixels[x + mapSize.x * y] = map[x, y] == 1 ? Color.black : Color.white;
+                pixels[x + mapSize.x * y] = map[x, y] == (int)TileType.WALL ? Color.black : Color.white;
             }
         }
 
@@ -52,5 +56,46 @@ public class CellularAutomataVisualizer : MonoBehaviour
 
         renderer.sharedMaterial.mainTexture = texture2D;
 
+    }
+
+    public Vector2Int WorldPosToMapPos(Vector2 position)
+    {
+        Vector2 translatedPosition = position + new Vector2(imageSize.x / 2, imageSize.y / 2);
+        float lerpX = Mathf.LerpUnclamped(0, mapSize.x, translatedPosition.x / imageSize.x);
+        float lerpY = Mathf.LerpUnclamped(0, mapSize.y, translatedPosition.y / imageSize.y);
+
+        Vector2 scaledPosition = new Vector2(lerpX, lerpY);
+        Vector2Int roundedPosition = new Vector2Int((int)Mathf.Floor(scaledPosition.x), (int)Mathf.Floor(scaledPosition.y));
+
+        return roundedPosition;
+    }
+
+    public void PaintPosition(Vector2 worldPosition, TileType tileType)
+    {
+        Vector2Int mapPosition = WorldPosToMapPos(worldPosition);
+
+        if (mapPosition.x < 0 || mapPosition.x >= mapSize.x || mapPosition.y < 0 || mapPosition.y >= mapSize.y)
+        {
+            return;
+        }
+        else
+        {
+            if (map[mapPosition.x, mapPosition.y] != (int)tileType)
+            {
+                map[mapPosition.x, mapPosition.y] = (int)tileType;
+                UpdateImage();
+            }
+        }
+    }
+
+    public int[,] GetMap()
+    {
+        return map;
+    }
+
+    public enum TileType : int
+    {
+        WALL = 1,
+        EMPTY = 0
     }
 }

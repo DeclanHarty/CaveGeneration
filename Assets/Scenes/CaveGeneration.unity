@@ -382,8 +382,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   renderGraph: 0
-  renderRoom: 0
-  renderTunnels: 0
+  renderRoom: 1
+  renderTunnels: 1
   graphParams:
     topLeftCorner: {x: -5, y: 5}
     bottomRightCorner: {x: 5, y: -5}
@@ -405,6 +405,8 @@ MonoBehaviour:
     splineUpscale: 4
     randomDistributionRadius: 0.25
     tunnelThickness: 0.08
+    minTunnelThickness: 0.08
+    maxTunnelThickness: 0.12
   cellSize: 2.5
 --- !u!4 &1993088350
 Transform:
