@@ -25,6 +25,27 @@ public class CellularAutomataVisualizer : MonoBehaviour
         UpdateImage();
     }
 
+    public void SetMap(int[,] map, Vector2Int mapSize)
+    {
+        this.map = map;
+        this.mapSize = mapSize;
+        UpdateImage();
+    }
+    public void SetMap(int[] map, Vector2Int mapSize)
+    {
+        int[,] TwoDMap = new int[mapSize.x, mapSize.y];
+        for (int x = 0; x < mapSize.x; x++)
+        {
+            for (int y = 0; y < mapSize.y; y++)
+            {
+                TwoDMap[x, y] = map[x + mapSize.x * y];
+            }
+        }
+        this.map = TwoDMap;
+        this.mapSize = mapSize;
+        UpdateImage();
+    }
+
     public void PerformCA()
     {
         map = CellularAutomata.RunGeneration(map);

@@ -14,7 +14,7 @@ public class MapEditor : MonoBehaviour
 
     public void Update()
     {
-        if (Input.GetMouseButton(0) && selectedTool != Tool.PLACE_TUNNEL_POINT)
+        if (Input.GetMouseButton(0) && selectedTool != Tool.NONE)
         {
             cellularAutomataVisualizer.PaintPosition(Camera.main.ScreenToWorldPoint(Input.mousePosition), (CellularAutomataVisualizer.TileType)(int)selectedTool);
         }
@@ -41,7 +41,7 @@ public class MapEditor : MonoBehaviour
     {
         UnselectTunnelPoint();
         selectedTunnelPoint = tunnelPoint;
-        selectedTool = Tool.PLACE_TUNNEL_POINT;
+        selectedTool = Tool.NONE;
     }
 
     public void UnselectTunnelPoint()
@@ -57,12 +57,21 @@ public class MapEditor : MonoBehaviour
     public void ResetEditor()
     {
         cellularAutomataVisualizer.CreateMap();
-
     }
 
+    public void AddTunnelPoint(Vector2 position)
+    {
+        TunnelPoint tunnelPoint = Instantiate(tunnelPointPrefab, position, Quaternion.identity).GetComponent<TunnelPoint>();
+        SetSelectedTunnelPoint(tunnelPoint);
+
+        tunnelPoint.SetMapEditor(this);
+        tunnelPoint.Select();
+        tunnelPoints.Add(tunnelPoint);
+    }
+    
     public void AddTunnelPoint()
     {
-        TunnelPoint tunnelPoint = Instantiate(tunnelPointPrefab, Vector3.zero, Quaternion.identity).GetComponent<TunnelPoint>();
+        TunnelPoint tunnelPoint = Instantiate(tunnelPointPrefab, Vector2.zero, Quaternion.identity).GetComponent<TunnelPoint>();
         SetSelectedTunnelPoint(tunnelPoint);
 
         tunnelPoint.SetMapEditor(this);
@@ -78,7 +87,7 @@ public class MapEditor : MonoBehaviour
             Destroy(selectedTunnelPoint.gameObject);
             selectedTunnelPoint = null;
         }
-        
+
     }
 
     public void SaveRoom()
@@ -111,7 +120,17 @@ public class MapEditor : MonoBehaviour
 
         room.mapSize = mapSize;
 
-        room.PrintJsonString();
+        CARoomFileManager.SaveCARoom(room);
+    }
+
+    public void OpenRoom()
+    {
+        CARoom room = CARoomFileManager.OpenCARoom();
+
+        ClearAllTunnelPoints();
+        CreateTunnelPointsFromPositions(SerializableVector2.GetSerializableList(room.tunnelPoints.ToList()).ToArray());
+        selectedTool = Tool.NONE;
+        cellularAutomataVisualizer.SetMap(room.map, room.mapSize);
     }
 
     public void ClearAllTunnelPoints()
@@ -126,10 +145,18 @@ public class MapEditor : MonoBehaviour
         selectedTunnelPoint = null;
     }
 
+    public void CreateTunnelPointsFromPositions(Vector2[] positions)
+    {
+        foreach (Vector2 position in positions)
+        {
+            AddTunnelPoint(position);
+        }
+    }
+
     public enum Tool : int
     {
         DRAW_WALL = 1,
         ERASE_WALL = 0,
-        PLACE_TUNNEL_POINT = -1
+        NONE = -1
     }
 }

@@ -9,8 +9,13 @@ public class CARoom
     public int[] map;
     public Vector2Int mapSize;
 
-    public void PrintJsonString()
+    public string GetJsonString()
     {
-        Debug.Log(Newtonsoft.Json.JsonConvert.SerializeObject(this));
+        return Newtonsoft.Json.JsonConvert.SerializeObject(this);
+    }
+
+    public static CARoom CreateCARoomFromJson(string value)
+    {
+        return Newtonsoft.Json.JsonConvert.DeserializeObject<CARoom>(value);
     }
 }
